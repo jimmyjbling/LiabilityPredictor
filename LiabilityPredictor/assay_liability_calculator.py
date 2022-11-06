@@ -172,7 +172,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--infile", type=str, required=True,
                         help="location to csv of SMILES")
-    parser.add_argument("--outfile", type=str, default=os.path.join(os.getcwd(), "phakin_output.csv"),
+    parser.add_argument("--outfile", type=str, default=os.path.join(os.getcwd(), "liability_output.csv"),
                         help="location and file name for output")
     parser.add_argument("--smiles_col", type=str, default="SMILES",
                         help="column name containing SMILES of interest"),
