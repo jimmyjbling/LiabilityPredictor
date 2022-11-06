@@ -1,16 +1,16 @@
-# PhaKinPro
+# LiabilityPredictor
 
-PHArmacoKINetic PROperty calculator: Used to predict varies pharmacokinetic properties using QSAR models. If you use please cite \[INSERT CITATION HERE]. There is a [webserver](http://34.170.18.221/) that runs these models, but for large numbers of compounds, running locally using this code is much more effective
+The Liability Predictor is used to predict varies possible assay liabilities for compounds using QSAR models. If you use please cite \[INSERT CITATION HERE]. There is a [webserver](http://34.170.163.43/) that runs these models, but for large numbers of compounds, running locally using this code is much more effective
 
 # Requierments
 Install the requirments from the requirements.txt file. Additionally, if you want to run the webserver, you need to install flask and qunicorn
 
 # Command line use
-After downloading, `PhaKinPro/phakinpro.py` can be called from the command line with `python pharkinpro --help`
+After downloading, `LiabilityPredictor/assay_liability_calculator.py` can be called from the command line with `python assay_liability_calculator --help`
 
 `--infile` is required and is the fileloc for a csv of SMILES to predict properties for. Requires that csv has header and is comma seperated
 `--smiles_col` is the name of the column containing the SMILES strings of interest. Defaults to "SMILES"
-`--outfile` is the fileloc of where the output csv file should go. Defaults to `current-working-directory/phakin_output.csv`
+`--outfile` is the fileloc of where the output csv file should go. Defaults to `current-working-directory/liability_output.csv`
 `--ad` flag to turn on applicability domain calculation for the models
 
 # Webserver interface
