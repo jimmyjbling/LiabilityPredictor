@@ -4,3 +4,4 @@ rdkit
 scipy
 tqdm
 scikit-learn
+xgboost=1.6.2
