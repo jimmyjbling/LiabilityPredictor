@@ -1,6 +1,6 @@
 # LiabilityPredictor
 
-The Liability Predictor is used to predict varies possible assay liabilities for compounds using QSAR models. If you use please cite \[INSERT CITATION HERE]. There is a [webserver](http://34.170.163.43/) that runs these models, but for large numbers of compounds, running locally using this code is much more effective
+The Liability Predictor is used to predict varies possible assay liabilities for compounds using QSAR models. If you use please cite \[INSERT CITATION HERE]. There is a [webserver](https://liability.mml.unc.edu/) that runs these models, but for large numbers of compounds, running locally using this code is much more effective
 
 # Requierments
 Install the requirments from the requirements.txt file. Additionally, if you want to run the webserver, you need to install flask and qunicorn
