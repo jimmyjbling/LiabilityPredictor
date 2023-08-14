@@ -67,9 +67,6 @@ def run_prediction(model, model_data, smiles, calculate_ad=True):
     pred_proba = model.predict_proba(fp.reshape(1, -1))[:, 1]
     pred = 1 if pred_proba > 0.5 else 0
 
-    if pred == 0:
-        pred_proba = 1-pred_proba
-
     if calculate_ad:
         ad = model_data["D_cutoff"] > np.min(cdist(model_data['Descriptors'].to_numpy(), fp.reshape(1, -1)))
         return pred, pred_proba, ad
