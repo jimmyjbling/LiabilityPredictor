@@ -55,6 +55,7 @@ OUTCOME_DICT = {
     }
 }
 
+
 def run_prediction(model, model_data, smiles, calculate_ad=True):
     fp = np.zeros((2048, 1))
 
@@ -152,8 +153,7 @@ def write_csv_file(smiles_list, calculate_ad=False, outfile=""):
             for model_name, pred, pred_proba, ad, _ in data:
                 try:
                     pred_proba = float(pred_proba[:-1]) / 100  # covert back to 0-1 float
-                    row[
-                        model_name] = pred_proba if pred == 1 else 1 - pred_proba  # this is to make sure its proba for class 1
+                    row[model_name] = pred_proba
                 except ValueError:
                     row[model_name] = "No prediction"  # if pred_proba is string skip
                 if calculate_ad:

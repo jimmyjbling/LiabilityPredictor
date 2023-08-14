@@ -1,5 +1,6 @@
 .vscode
 __pycache__
 .prettierrc
-plot_histogram
-csvs
+csvs/
+analyse_results.py
+plot_histogram.py
