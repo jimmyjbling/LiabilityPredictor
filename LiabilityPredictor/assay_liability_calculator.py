@@ -16,39 +16,40 @@ import matplotlib.pyplot as plt
 # warnings.warn = warn
 
 
+# Modify your MODEL_DICT to use valid field names
 MODEL_DICT = {
-    'Firefly_Luciferase_counter_assay_training_set_curated_model.pkl': 'Firefly Luciferase interference',
-    'Nano_Luciferase_counter_assay_training_set_curated_model.pkl': 'Nano Luciferase interference',
-    'Redox_training_set_curated_model.pkl': 'Redox interference',
-    'Thiol_training_set_curated_model.pkl': 'Thiol interference',
-    'agg_betalac_model.pkl': 'AmpC β-lactamase aggregation',
-    'agg_cruzain_model.pkl': 'Cysteine protease cruzain aggregation'
+    'Firefly_Luciferase_counter_assay_training_set_curated_model.pkl': 'Firefly_Luciferase_interference',
+    'Nano_Luciferase_counter_assay_training_set_curated_model.pkl': 'Nano_Luciferase_interference',
+    'Redox_training_set_curated_model.pkl': 'Redox_interference',
+    'Thiol_training_set_curated_model.pkl': 'Thiol_interference',
+    'agg_betalac_model.pkl': 'AmpC_betalactamase_aggregation',
+    'agg_cruzain_model.pkl': 'Cysteine_protease_cruzain_aggregation'
 }
 
 MODEL_DICT_INVERT = {val: key for key, val in MODEL_DICT.items()}
 
 OUTCOME_DICT = {
-    'Firefly Luciferase interference': {
+    'Firefly_Luciferase_interference': {
         1: "Possible Interference",
         0: "No Interference"
     },
-    'Nano Luciferase interference': {
+    'Nano_Luciferase_interference': {
         1: "Possible Interference",
         0: "No Interference"
     },
-    'Redox interference': {
+    'Redox_interference': {
         1: "Possible Interference",
         0: "No Interference"
     },
-    'Thiol interference': {
+    'Thiol_interference': {
         1: "Possible Interference",
         0: "No Interference"
     },
-    'AmpC β-lactamase aggregation': {
+    'AmpC_betalactamase_aggregation': {
         1: "Putative aggregator",
         0: "Non-aggregator"
     },
-    'Cysteine protease cruzain aggregation': {
+    'Cysteine_protease_cruzain_aggregation': {
         1: "Putative aggregator",
         0: "Non-aggregator"
     }
@@ -57,14 +58,14 @@ OUTCOME_DICT = {
 
 def run_prediction(model, model_data, smiles, calculate_ad=True):
     fp = np.zeros((2048, 1))
+
+
+    # 
     _fp = AllChem.GetMorganFingerprintAsBitVect(Chem.MolFromSmiles(smiles), radius=3, nBits=2048)
     DataStructs.ConvertToNumpyArray(_fp, fp)
 
     pred_proba = model.predict_proba(fp.reshape(1, -1))[:, 1]
     pred = 1 if pred_proba > 0.5 else 0
-
-    if pred == 0:
-        pred_proba = 1-pred_proba
 
     if calculate_ad:
         ad = model_data["D_cutoff"] > np.min(cdist(model_data['Descriptors'].to_numpy(), fp.reshape(1, -1)))
@@ -92,74 +93,70 @@ def get_prob_map(model, smiles):
     return imgdata.getvalue()
 
 
-def main(smiles, calculate_ad=False, make_prop_img=False, **kwargs):
-
-    print(smiles)
-
+def main(smiles, calculate_ad=False, make_prop_img=False, models_directory = "models/assay_inter/*.pkl",  **kwargs):
     def default(key, d):
         if key in d.keys():
             return d[key]
         else:
             return False
 
-    models = sorted([f for f in glob.glob(os.path.join(os.path.dirname(os.path.realpath(__file__)), "models/assay_inter/*.pkl"))])
+    model_paths = sorted([f for f in glob.glob(os.path.join(os.path.dirname(os.path.realpath(__file__)), models_directory))])
 
     values = {}
 
-    for model in models:
-        if not default(MODEL_DICT[os.path.basename(model)], kwargs):
+    for model_path in model_paths:
+        if not default(os.path.basename(model_path), kwargs):
             continue
-        with open(model, 'rb') as f:
-            m = pickle.load(f)
+        with open(model_path, 'rb') as f:
+            model = pickle.load(f)
 
         # for now I have no AD data so we are just doing this
         # pred, pred_proba, ad = run_prediction(m, None, smiles, calculate_ad=calculate_ad)
-        pred, pred_proba, ad = run_prediction(m, None, smiles, calculate_ad=False)
+        pred, pred_proba, ad = run_prediction(model, None, smiles, calculate_ad=False)
 
         svg_str = ""
         if make_prop_img:
-            svg_str = get_prob_map(m, smiles)
+            svg_str = get_prob_map(model, smiles)
 
-        values[MODEL_DICT[os.path.basename(model)]] = [OUTCOME_DICT[MODEL_DICT[os.path.basename(model)]][int(pred)], str(round(float(pred_proba) * 100, 2)) + "%", "NA", svg_str]
-
+        values[MODEL_DICT[os.path.basename(model_path)]] = [OUTCOME_DICT[MODEL_DICT[os.path.basename(model_path)]][int(pred)], str(round(float(pred_proba) * 100, 2)) + "%", "NA", svg_str]
     return [[key] + val for key, val in values.items()]
 
 
-def write_csv_file(smiles_list, calculate_ad=False):
-    headers = list(MODEL_DICT.keys())
+def write_csv_file(smiles_list, calculate_ad=False, outfile=""):
+    headers = list(MODEL_DICT.values())  # Use the modified keys
 
     if calculate_ad:
         headers = headers + [_ + "_AD" for _ in headers]
 
-    string_file = StringIO()
-    writer = csv.DictWriter(string_file, fieldnames=['SMILES', *headers])
-    writer.writeheader()
+    with open(outfile, 'w') as csv_file:
+        writer = csv.DictWriter(csv_file, fieldnames=['SMILES', *headers])
+        writer.writeheader()
 
-    for smiles in tqdm(smiles_list):
-        molecule = MolFromSmiles(smiles)
+        for smiles in tqdm(smiles_list):
+            molecule = MolFromSmiles(smiles)
 
-        row = {'SMILES': smiles}
+            if not molecule:
+                continue
 
-        if molecule is None:
-            row['SMILES'] = f"(invalid){smiles}"
+            row = {'SMILES': smiles}
+
+            if molecule is None:
+                row['SMILES'] = f"(invalid){smiles}"
+                writer.writerow(row)
+                continue
+
+            data = main(smiles, calculate_ad=calculate_ad, **MODEL_DICT)
+
+            for model_name, pred, pred_proba, ad, _ in data:
+                try:
+                    pred_proba = float(pred_proba[:-1]) / 100  # covert back to 0-1 float
+                    row[model_name] = pred_proba
+                except ValueError:
+                    row[model_name] = "No prediction"  # if pred_proba is string skip
+                if calculate_ad:
+                    row[model_name + "_AD"] = ad
+
             writer.writerow(row)
-            continue
-
-        data = main(smiles, calculate_ad=calculate_ad, **MODEL_DICT)
-
-        for model_name, pred, pred_proba, ad, _ in data:
-            try:
-                pred_proba = float(pred_proba[:-1]) / 100  # covert back to 0-1 float
-                row[
-                    model_name] = pred_proba if pred == 1 else 1 - pred_proba  # this is to make sure its proba for class 1
-            except ValueError:
-                row[model_name] = "No prediction"  # if pred_proba is string skip
-            if calculate_ad:
-                row[model_name + "_AD"] = ad
-
-        writer.writerow(row)
-
-    return string_file.getvalue()
 
 
 if __name__ == "__main__":
@@ -178,3 +175,12 @@ if __name__ == "__main__":
                         help="column name containing SMILES of interest"),
     parser.add_argument("--ad", action="store_true",
                         help="calculate the AD")
+    args = parser.parse_args()
+
+    #TODO get smiles out of infile
+
+    with open(args.infile, "r") as smiles_file:
+        smiles_data = smiles_file.read().split('\n')
+
+    write_csv_file(smiles_data, args.ad, args.outfile)
+
